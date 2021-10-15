@@ -54,9 +54,17 @@ import org.springframework.util.Assert;
  * @see org.springframework.context.support.GenericXmlApplicationContext
  */
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
-
+	/**
+	 * Convenient adapter for programmatic registration of bean classes.
+	 * This is an alternative to {@link ClassPathBeanDefinitionScanner}, applying
+	 *  * the same resolution of annotations but for explicitly registered classes only.
+	 */
 	private final AnnotatedBeanDefinitionReader reader;
-
+	/**
+	 *  A bean definition scanner that detects bean candidates on the classpath,
+	 *  registering corresponding bean definitions with a given registry ({@code BeanFactory}
+	 *  or {@code ApplicationContext}).
+	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 
 
@@ -65,9 +73,12 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
 	 */
 	public AnnotationConfigApplicationContext() {
+		// Instruments the application startup phase using {@link StartupStep steps},统计信息相关
 		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup().start("spring.context.annotated-bean-reader.create");
-		this.reader = new AnnotatedBeanDefinitionReader(this);
-		createAnnotatedBeanDefReader.end();
+		// 新建一个AnnotatedBeanDefinitionReader实例，用来注册configClass；
+		this.reader = new AnnotatedBeanDefinitionReader(this); // this：AnnotationConfigApplicationContext实现了BeanDefinitionRegistry接口
+		createAnnotatedBeanDefReader.end(); // DefaultApplicationStartup.end是空方法
+		// 新建一个ClassPathBeanDefinitionScanner实例，用来扫描classpath中的类标有@Component等注解的bean
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -90,7 +101,8 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
 		this();
 		register(componentClasses);
-		refresh();
+		// 到此为止，注册了一些beanFactoryPostProcessor，beanPostProcessor和主配置类AnnoConfig的beanDefinition，然后进入spring重中之重的fresh方法
+		refresh(); // 调用父类AbstractApplicationContext的refresh方法，异常重要
 	}
 
 	/**

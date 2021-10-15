@@ -85,6 +85,7 @@ public @interface Scope {
 	String scopeName() default "";
 
 	/**
+	 * proxyMode原理参考【url】：https://www.jianshu.com/p/fcdcbaace675
 	 * Specifies whether a component should be configured as a scoped proxy
 	 * and if so, whether the proxy should be interface-based or subclass-based.
 	 * <p>Defaults to {@link ScopedProxyMode#DEFAULT}, which typically indicates

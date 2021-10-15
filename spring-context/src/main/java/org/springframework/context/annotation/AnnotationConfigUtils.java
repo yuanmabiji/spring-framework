@@ -157,9 +157,10 @@ public abstract class AnnotationConfigUtils {
 				beanFactory.setAutowireCandidateResolver(new ContextAnnotationAutowireCandidateResolver());
 			}
 		}
-
+		// beanDefs是一个有序的set哈
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
-
+		// ConfigurationClassPostProcessor， AutowiredAnnotationBeanPostProcessor，
+		// CommonAnnotationBeanPostProcessor，EventListenerMethodProcessor和DefaultEventListenerFactory
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
 			def.setSource(source);

@@ -149,11 +149,17 @@ class ConditionEvaluator {
 
 			this.registry = registry;
 			this.beanFactory = deduceBeanFactory(registry);
-			this.environment = (environment != null ? environment : deduceEnvironment(registry));
-			this.resourceLoader = (resourceLoader != null ? resourceLoader : deduceResourceLoader(registry));
-			this.classLoader = deduceClassLoader(resourceLoader, this.beanFactory);
+			this.environment = (environment != null ? environment : deduceEnvironment(registry)); // 有默认的StandardEnvironment兜底，兜底是没有符合条件的实例才会用兜底的
+			this.resourceLoader = (resourceLoader != null ? resourceLoader : deduceResourceLoader(registry)); // 有默认的DefaultResourceLoader兜底
+			this.classLoader = deduceClassLoader(resourceLoader, this.beanFactory); // Thread.currentThread().getContextClassLoader();兜底
 		}
 
+		/**
+		 * 1，如果BeanDefinitionRegistry子类实例实现了ConfigurableListableBeanFactory接口，直接返回该beanFactory实例；
+		 *,2，如果BeanDefinitionRegistry子类实例实现了ConfigurableApplicationContext，则从context取出beanFactory实例。
+		 * @param source
+		 * @return
+		 */
 		@Nullable
 		private ConfigurableListableBeanFactory deduceBeanFactory(@Nullable BeanDefinitionRegistry source) {
 			if (source instanceof ConfigurableListableBeanFactory) {

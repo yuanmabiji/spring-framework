@@ -68,7 +68,8 @@ public class AnnotatedBeanDefinitionReader {
 	 * @see #setEnvironment(Environment)
 	 */
 	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
-		this(registry, getOrCreateEnvironment(registry));
+
+		this(registry, getOrCreateEnvironment(registry)); // 获取environment，若registry实现了EnvironmentCapable接口，调用(EnvironmentCapable) registry).getEnvironment()获取；若没有，返回默认的StandardEnvironment
 	}
 
 	/**
@@ -85,7 +86,10 @@ public class AnnotatedBeanDefinitionReader {
 		Assert.notNull(environment, "Environment must not be null");
 		this.registry = registry;
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, null);
-		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
+		// 【非常重要】：在构建AnnotationConfigApplicationContext实例时就注册了一些PostProcessor们，比如BeanDefinitionRegistryPostProcessor类型的ConfigurationClassPostProcessor
+		// 这些BeanDefinitionRegistryPostProcessor们在spring容器初始化的早期开始执行，用来加载注册一些bean definitions
+		// 另外还注册了 AutowiredAnnotationBeanPostProcessor（BeanPostProcessor），CommonAnnotationBeanPostProcessor（BeanPostProcessor），EventListenerMethodProcessor（BeanFactoryPostProcessor）等bean definitions
+		AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry); // Register all relevant annotation post processors in the given registry.
 	}
 
 
