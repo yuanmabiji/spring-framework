@@ -29,7 +29,8 @@ import org.springframework.lang.Nullable;
  * by name one by one as requested by clients. BeanFactory implementations that
  * preload all their bean definitions (such as XML-based factories) may implement
  * this interface.
- *
+ * 【注意】只会返回当前容器的bean信息，不包括父容器，如果需要，请使用BeanFactoryUtils；
+ *        即ListableBeanFactory只关注当前容器，不关注父容器
  * <p>If this is a {@link HierarchicalBeanFactory}, the return values will <i>not</i>
  * take any BeanFactory hierarchy into account, but will relate only to the beans
  * defined in the current factory. Use the {@link BeanFactoryUtils} helper class

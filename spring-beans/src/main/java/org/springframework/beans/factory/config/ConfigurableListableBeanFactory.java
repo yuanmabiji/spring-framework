@@ -27,7 +27,7 @@ import org.springframework.lang.Nullable;
  * Configuration interface to be implemented by most listable bean factories.
  * In addition to {@link ConfigurableBeanFactory}, it provides facilities to
  * analyze and modify bean definitions, and to pre-instantiate singletons.
- *
+ * 【注意】程序员一般关注BeanFactory和ListableBeanFactory方法即可，此外的ConfigurableListableBeanFactory等接口不是给程序员准备的
  * <p>This subinterface of {@link org.springframework.beans.factory.BeanFactory}
  * is not meant to be used in normal application code: Stick to
  * {@link org.springframework.beans.factory.BeanFactory} or

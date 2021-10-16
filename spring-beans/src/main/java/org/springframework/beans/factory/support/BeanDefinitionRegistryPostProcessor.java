@@ -20,6 +20,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 
 /**
+ * 关于spring中的BeanDefinitionRegistryPostProcessor和ImportBeanDefinitionRegistrar接口区别：
+ * 参考[url]：https://blog.csdn.net/lichuangcsdn/article/details/89930945
  * Extension to the standard {@link BeanFactoryPostProcessor} SPI, allowing for
  * the registration of further bean definitions <i>before</i> regular
  * BeanFactoryPostProcessor detection kicks in. In particular,

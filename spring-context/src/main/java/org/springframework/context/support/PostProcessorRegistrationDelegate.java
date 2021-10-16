@@ -71,24 +71,24 @@ final class PostProcessorRegistrationDelegate {
 		// list of all declined PRs involving changes to PostProcessorRegistrationDelegate
 		// to ensure that your proposal does not result in a breaking change:
 		// https://github.com/spring-projects/spring-framework/issues?q=PostProcessorRegistrationDelegate+is%3Aclosed+label%3A%22status%3A+declined%22
-
+		// 【1】首先调用BeanDefinitionRegistryPostProcessors
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
 		Set<String> processedBeans = new HashSet<>();
-
+		// 传入的beanFactory(DefaultListableBeanFactory实例)实现了BeanDefinitionRegistry接口哈
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
-
+			// 对传入的beanFactoryPostProcessors进行分类，分别添加至regularPostProcessors或registryProcessors集合
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
-					registryProcessor.postProcessBeanDefinitionRegistry(registry);
-					registryProcessors.add(registryProcessor);
+					registryProcessor.postProcessBeanDefinitionRegistry(registry); // 对于已经添加至AbstractApplicationContext的beanFactoryPostProcessors集合的BeanDefinitionRegistryPostProcessor类型的后置处理器需要优先调用哈，比如springboot的CachingMetadataReaderFactoryPostProcessor,ConfigurationWarningsPostProcessor属于这种类型
+					registryProcessors.add(registryProcessor); // BeanDefinitionRegistryPostProcessor类型后置处理器添加至registryProcessors集合
 				}
 				else {
-					regularPostProcessors.add(postProcessor);
+					regularPostProcessors.add(postProcessor); // 普通BeanFactoryPostProcessor后置处理器添加至regularPostProcessors集合
 				}
 			}
 
@@ -97,17 +97,17 @@ final class PostProcessorRegistrationDelegate {
 			// Separate between BeanDefinitionRegistryPostProcessors that implement
 			// PriorityOrdered, Ordered, and the rest.
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
-
-			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
+			// 此时从beanFactory中取出BeanDefinitionRegistryPostProcessor类型的BeanNames，此时符合条件的只有ConfigurationClassPostProcessor，这个后置处理器在新建AnnotatedBeanDefinitionReader时作为bd加入到了beanFactory，注意springboot环节下的比如springboot的CachingMetadataReaderFactoryPostProcessor,ConfigurationWarningsPostProcessor是直接new新建的，没有作为bd加入beanFactory的
+			// 【优先处理实现PriorityOrdered接口的BeanDefinitionRegistryPostProcessor】First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
-				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
-					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));
-					processedBeans.add(ppName);
+				if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {// ConfigurationClassPostProcessor实现了PriorityOrdered接口
+					currentRegistryProcessors.add(beanFactory.getBean(ppName, BeanDefinitionRegistryPostProcessor.class));// 此时会实例化ConfigurationClassPostProcessor并放入beanFactory,最后加入currentRegistryProcessors集合
+					processedBeans.add(ppName); // 并将处理过的BeanDefinitionRegistryPostProcessor的name加入processedBeans以标识已处理，防止后面重复处理哈
 				}
 			}
-			sortPostProcessors(currentRegistryProcessors, beanFactory);
+			sortPostProcessors(currentRegistryProcessors, beanFactory); // TODO 待分析：根据Order排序
 			registryProcessors.addAll(currentRegistryProcessors);
 			invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry, beanFactory.getApplicationStartup());
 			currentRegistryProcessors.clear();

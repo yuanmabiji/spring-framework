@@ -99,9 +99,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
-		this();
+		this(); // 新建了三个重要的实例：1，给父类GenericApplicationContext（springboot的AnnotationConfigServletWebServerApplicationContext一样继承了GenericApplicationContext）创建DefaultListableBeanFactory实例；2，给自己创建AnnotatedBeanDefinitionReader和ClassPathBeanDefinitionScanner实例（springboot的AnnotationConfigServletWebServerApplicationContext一样持有这两个实例来加载beandefinition哈）
 		register(componentClasses);
-		// 到此为止，注册了一些beanFactoryPostProcessor，beanPostProcessor和主配置类AnnoConfig的beanDefinition，然后进入spring重中之重的fresh方法
+		// 到此为止，注册了一些开天辟地的beanFactoryPostProcessor，beanPostProcessor和主配置类AnnoConfig的beanDefinition，然后进入spring重中之重的fresh方法
 		refresh(); // 调用父类AbstractApplicationContext的refresh方法，异常重要
 	}
 

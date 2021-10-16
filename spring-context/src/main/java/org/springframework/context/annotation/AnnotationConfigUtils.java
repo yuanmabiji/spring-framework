@@ -159,8 +159,8 @@ public abstract class AnnotationConfigUtils {
 		}
 		// beanDefs是一个有序的set哈
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
-		// ConfigurationClassPostProcessor， AutowiredAnnotationBeanPostProcessor，
-		// CommonAnnotationBeanPostProcessor，EventListenerMethodProcessor和DefaultEventListenerFactory
+		// 添加ConfigurationClassPostProcessor， AutowiredAnnotationBeanPostProcessor，
+		// CommonAnnotationBeanPostProcessor，EventListenerMethodProcessor和DefaultEventListenerFactory等beanDefinition至DefaultListableBeanFactory的beanDefinitionMap和beanDefinitionNames集合
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
 			def.setSource(source);
