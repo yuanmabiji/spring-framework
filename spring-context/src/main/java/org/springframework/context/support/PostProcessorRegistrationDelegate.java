@@ -153,6 +153,12 @@ final class PostProcessorRegistrationDelegate {
 			// Invoke factory processors registered with the context instance.
 			invokeBeanFactoryPostProcessors(beanFactoryPostProcessors, beanFactory);
 		}
+		/*********************************************************************************************************************************************
+		                                                                 所有bd已经加载完成！
+		到了这里，一般认为所有类型的bd（包括@Component,ImportBeanDefinitionRegistrar,@Bean，BeanDefinitionRegistryPostProcessor等等类型的bd）已经加载进了容器即
+		 加载到了DefaultListableBeanFactory的beanDefinitionMap和beanDefinitionNames集合，后面的BeanFactoryPostProcessor一般不用来注册（添加）bd了，一般注册（添加）bd
+		 都是用BeanDefinitionRegistryPostProcessor哈，而BeanFactoryPostProcessor可以修改容器中的bd信息，这在修改容器的bd信息大有用武之地，可参考PropertySourcesPlaceholderConfigurer（TODO 属性相关待分析）
+		 *********************************************************************************************************************************************/
 		// 【第二大步】然后处理容器中的BeanFactoryPostProcessor类型的bean，虽然也会从beanFactory中加载出BeanDefinitionRegistryPostProcessor类型的bean,但有processedBeans做了标记，根据标记跳过即可
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
@@ -218,7 +224,7 @@ final class PostProcessorRegistrationDelegate {
 		// list of all declined PRs involving changes to PostProcessorRegistrationDelegate
 		// to ensure that your proposal does not result in a breaking change:
 		// https://github.com/spring-projects/spring-framework/issues?q=PostProcessorRegistrationDelegate+is%3Aclosed+label%3A%22status%3A+declined%22
-
+		// 这里会从spring容器中获取到AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor两种类型的beanPostProcessor，这两个哥们均在AnnotationConfigUtils.registerAnnotationConfigProcessors方法中注册
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when

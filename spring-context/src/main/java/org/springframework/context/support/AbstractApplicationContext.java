@@ -559,11 +559,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
-				postProcessBeanFactory(beanFactory); // 这一步留给子类context进行后置处理beanFactory，比如springboot的AnnotationConfigServletWebServerApplicationContext会调用父类ServletWebServerApplicationContext为beanFactory添加WebApplicationContextServletContextAwareProcessor，若其属性basePackages或annotatedClasses不为空（默认为空），那么还会加载bd
+				postProcessBeanFactory(beanFactory); // 【4】这一步留给子类context进行后置处理beanFactory，比如springboot的AnnotationConfigServletWebServerApplicationContext会调用父类ServletWebServerApplicationContext为beanFactory添加WebApplicationContextServletContextAwareProcessor，若其属性basePackages或annotatedClasses不为空（默认为空），那么还会加载bd
 
 				StartupStep beanPostProcess = this.applicationStartup.start("spring.context.beans.post-process");
 				// Invoke factory processors registered as beans in the context.
-				invokeBeanFactoryPostProcessors(beanFactory);
+				invokeBeanFactoryPostProcessors(beanFactory);// 【5】5.1，调用BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry方法完成所有bd的加载（调用时机：可理解为注册bd前）；5.2，在bd加载完后，调用BeanFactoryPostProcessor.postProcessBeanFactory方法处理bd，比如修改bd的属性等（调用时机：可理解为注册bd后创建bean实例前）
 
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
