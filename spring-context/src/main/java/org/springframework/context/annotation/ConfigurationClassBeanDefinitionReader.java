@@ -150,11 +150,11 @@ class ConfigurationClassBeanDefinitionReader {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
-			loadBeanDefinitionsForBeanMethod(beanMethod);
+			loadBeanDefinitionsForBeanMethod(beanMethod); // 加载@Bean注解的beanMethod相关bd
 		}
 
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
-		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
+		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars()); // 这里最终会调用到ImportBeanDefinitionRegistrar子类的registerBeanDefinitions方法来注册bd
 	}
 
 	/**
@@ -223,7 +223,7 @@ class ConfigurationClassBeanDefinitionReader {
 		ConfigurationClassBeanDefinition beanDef = new ConfigurationClassBeanDefinition(configClass, metadata, beanName);
 		beanDef.setSource(this.sourceExtractor.extractSource(metadata, configClass.getResource()));
 
-		if (metadata.isStatic()) {
+		if (metadata.isStatic()) {// 若@Bean注解的bean method是static方法的话，此时设置其属性beanClass为其所在配置类的class全限定名或class
 			// static @Bean method
 			if (configClass.getMetadata() instanceof StandardAnnotationMetadata) {
 				beanDef.setBeanClass(((StandardAnnotationMetadata) configClass.getMetadata()).getIntrospectedClass());
@@ -233,9 +233,9 @@ class ConfigurationClassBeanDefinitionReader {
 			}
 			beanDef.setUniqueFactoryMethodName(methodName);
 		}
-		else {
+		else { // 若@Bean注解的bean method是实例方法的话，此时设置其属性factoryBeanName为其所在配置类的bean名称比如annoConfig
 			// instance @Bean method
-			beanDef.setFactoryBeanName(configClass.getBeanName());
+			beanDef.setFactoryBeanName(configClass.getBeanName()); //
 			beanDef.setUniqueFactoryMethodName(methodName);
 		}
 

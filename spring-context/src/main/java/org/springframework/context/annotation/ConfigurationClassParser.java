@@ -266,7 +266,7 @@ class ConfigurationClassParser {
 	protected final SourceClass doProcessConfigurationClass(
 			ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
 			throws IOException {
-		// TODO 待分析：这里为何处理memberClass要configuration注解类标有@Component注解呢？
+		// 若配置类标注有@Component等派生注解比如@Configuration等，此时需要处理其成员配置类（包括静态内部类哈）
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first
 			processMemberClasses(configClass, sourceClass, filter);
@@ -299,7 +299,7 @@ class ConfigurationClassParser {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
 						bdCand = holder.getBeanDefinition();
-					}
+					}// 注意：只要标注有@Component的类都会被认为是配置类,因为这里@ComponentScans扫描出来可能存在配置类，因此递归调用parse方法进行解析
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
 						parse(bdCand.getBeanClassName(), holder.getBeanName());
 					}
