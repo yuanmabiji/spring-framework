@@ -922,8 +922,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		for (String beanName : beanNames) {
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
-				if (isFactoryBean(beanName)) {
-					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
+				if (isFactoryBean(beanName)) { // 对于FactoryBean的情况
+					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName); // 创建FactoryBean实例，FactoryBean名称前面加个&号
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
 						boolean isEagerInit;
@@ -936,17 +936,17 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							isEagerInit = (factory instanceof SmartFactoryBean &&
 									((SmartFactoryBean<?>) factory).isEagerInit());
 						}
-						if (isEagerInit) {
+						if (isEagerInit) { // 如果FactoryBean是SmartFactoryBean类型的，且是eagerInit即非懒加载的，此时马上创建bean；否则一般是用到的时候再创建bean
 							getBean(beanName);
 						}
 					}
 				}
-				else {
+				else { // 对于普通bean（非FactoryBean）的情况
 					getBean(beanName);
 				}
 			}
 		}
-
+		// EventListenerMethodProcessor实现了SmartInitializingSingleton，这部分可结合EventListenerMethodProcessor的实现进行分析
 		// Trigger post-initialization callback for all applicable beans...
 		for (String beanName : beanNames) {
 			Object singletonInstance = getSingleton(beanName);
