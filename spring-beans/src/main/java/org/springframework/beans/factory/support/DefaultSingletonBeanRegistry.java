@@ -256,6 +256,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					}
 					afterSingletonCreation(beanName);
 				}
+				// 这里将创建好的单例bean（注意是spring的bean即创建好的对象经历了对象创建，属性注入和初始化过程）添加到DefaultSingletonBeanRegistry的singletonObjects集合中
 				if (newSingleton) {
 					addSingleton(beanName, singletonObject);
 				}
