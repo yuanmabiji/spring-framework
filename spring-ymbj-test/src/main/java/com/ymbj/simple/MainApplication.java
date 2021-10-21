@@ -1,12 +1,9 @@
 package com.ymbj.simple;
 
-import com.ymbj.simple.bean.Annimal;
 import com.ymbj.simple.bean.GenericBean;
-import com.ymbj.simple.bean.Person;
 import com.ymbj.simple.bean.RootBean;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-
+// TODO 有空研究下@Lookup注解
 public class MainApplication {
 	public static void main(String args[]) {
 		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(AnnoConfig.class);
@@ -17,5 +14,6 @@ public class MainApplication {
 		GenericBean genericBean = ac.getBean(GenericBean.class);
 		RootBean rootBean = ac.getBean(RootBean.class);
 		System.out.println();
+		ac.stop(); // 这句日志并不能吊起DisposableBean的destroy方法和@PreDestroy注解的方法
 	}
 }
