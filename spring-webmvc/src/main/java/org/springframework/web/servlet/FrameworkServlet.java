@@ -527,6 +527,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
+			// TODO QUESTION：传统的spring和springmvc用的是父子容器，但springboot用的是同一个容器，不存在父子容器的概念，为啥分久又合？然后springCloud又有很多父子容器的概念？
+			// TODO 参考:https://cloud.tencent.com/developer/article/1403379    https://blog.csdn.net/cml_blog/article/details/78459293    https://blog.csdn.net/weixin_39732640/article/details/112046193
 			this.webApplicationContext = initWebApplicationContext();
 			initFrameworkServlet();
 		}

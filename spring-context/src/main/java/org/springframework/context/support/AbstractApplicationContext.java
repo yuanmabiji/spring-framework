@@ -566,7 +566,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);// 【5】5.1，调用BeanDefinitionRegistryPostProcessor.postProcessBeanDefinitionRegistry方法完成所有bd的加载（调用时机：可理解为注册bd前）；5.2，在bd加载完后，调用BeanFactoryPostProcessor.postProcessBeanFactory方法处理bd，比如修改bd的属性等（调用时机：可理解为注册bd后创建bean实例前）
 
 				// Register bean processors that intercept bean creation.
-				registerBeanPostProcessors(beanFactory);
+				registerBeanPostProcessors(beanFactory); // 【6】注册bpp实例即将bpp实例添加至AbstactBeanFactory的beanPostProcessors集合，注意：bfpp实例是放在AbstractApplicationContext的beanFactoryPostProcessors集合哈
 				beanPostProcess.end();
 
 				// Initialize message source for this context.

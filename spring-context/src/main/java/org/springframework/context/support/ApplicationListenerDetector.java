@@ -111,7 +111,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 		return (bean instanceof ApplicationListener);
 	}
 
-
+	// 重写了equals方法，只要是同一个ApplicationListenerDetector和同一个容器内的都认为是equals
 	@Override
 	public boolean equals(@Nullable Object other) {
 		return (this == other || (other instanceof ApplicationListenerDetector &&

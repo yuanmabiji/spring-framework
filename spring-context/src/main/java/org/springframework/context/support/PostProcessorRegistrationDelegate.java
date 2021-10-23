@@ -224,43 +224,43 @@ final class PostProcessorRegistrationDelegate {
 		// list of all declined PRs involving changes to PostProcessorRegistrationDelegate
 		// to ensure that your proposal does not result in a breaking change:
 		// https://github.com/spring-projects/spring-framework/issues?q=PostProcessorRegistrationDelegate+is%3Aclosed+label%3A%22status%3A+declined%22
-		// 这里会从spring容器中获取到AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor两种类型的beanPostProcessor，这两个哥们均在AnnotationConfigUtils.registerAnnotationConfigProcessors方法中注册
+		// 这里会从spring容器中获取到AutowiredAnnotationBeanPostProcessor和CommonAnnotationBeanPostProcessor两种类型的beanPostProcessor的bdNames，这两个哥们均在AnnotationConfigUtils.registerAnnotationConfigProcessors方法中注册即注册到了DefaultListableBeanFactory的beanDefinitionMap集合
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
-
+		// QUSTION:弄明白BeanPostProcessorChecker的作用 ANSWER:因为bpp总是先于普通bean创建，因此BeanPostProcessorChecker的作用就是发现普通bean若比某些bpp先创建，此时会打印日志警告，因为这个bean将不会被这些bpp处理了。比如某个配置类里面的@Bean方法创建了一个bpp（这个方法没有static修饰哈，static修饰则不会）
 		// Register BeanPostProcessorChecker that logs an info message when
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
-		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
-		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
-
+		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length; // 此时new AnnotationConfigApplicationContext(AnnoConfig.class);的情况下，此时已经向AbstractBeanFactory的beanPostProcessors集合加入了3个beanPostProcessor，分别为调用prepareBeanFactory加入的ApplicationContextAwareProcessor和ApplicationListenerDetector，以及调用ConfigurationClassPostProcessor.postProcessBeanFactory方法加入的ImportAwareBeanPostProcessor
+		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));// 新建一个BeanPostProcessorChecker,因此最终的要创建的beanPostProcessor数量(DefaultListableBeanFactory的bd数量和AbstractBeanFactory的beanPostProcessors集合实例数量 )+BeanPostProcessorChecker(1)
+		// 跟BeanFactoryPostProcessor一样，根据PriorityOrdered,Ordered, and the rest分离beanPostProcessor
 		// Separate between BeanPostProcessors that implement PriorityOrdered,
 		// Ordered, and the rest.
 		List<BeanPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
-		List<BeanPostProcessor> internalPostProcessors = new ArrayList<>();
+		List<BeanPostProcessor> internalPostProcessors = new ArrayList<>(); // TODO MergedBeanDefinitionPostProcessor的作用？
 		List<String> orderedPostProcessorNames = new ArrayList<>();
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
-		for (String ppName : postProcessorNames) {
-			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+		for (String ppName : postProcessorNames) { // 遍历从容器中取出来的beanPostProcessor的bd name
+			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {// beanPostProcessor实现了PriorityOrdered接口，加入priorityOrderedPostProcessors集合
 				BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 				priorityOrderedPostProcessors.add(pp);
 				if (pp instanceof MergedBeanDefinitionPostProcessor) {
-					internalPostProcessors.add(pp);
+					internalPostProcessors.add(pp); // 如果beanPostProcessor还实现了MergedBeanDefinitionPostProcessor接口，那么将beanPostProcessor加入internalPostProcessors集合
 				}
 			}
-			else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {
+			else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {// beanPostProcessor实现了Ordered接口，ppName先加入orderedPostProcessorNames集合，下面再处理
 				orderedPostProcessorNames.add(ppName);
 			}
 			else {
-				nonOrderedPostProcessorNames.add(ppName);
+				nonOrderedPostProcessorNames.add(ppName); // beanPostProcessor没实现任何Ordered接口，ppName先加入nonOrderedPostProcessorNames集合，下面再处理
 			}
 		}
 
 		// First, register the BeanPostProcessors that implement PriorityOrdered.
-		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
-		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
+		sortPostProcessors(priorityOrderedPostProcessors, beanFactory); // 排序
+		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors); // 将装有bpp实例的priorityOrderedPostProcessors集合批量添加至AbstractBeanFactory的beanPostProcessors集合中
 
 		// Next, register the BeanPostProcessors that implement Ordered.
-		List<BeanPostProcessor> orderedPostProcessors = new ArrayList<>(orderedPostProcessorNames.size());
+		List<BeanPostProcessor> orderedPostProcessors = new ArrayList<>(orderedPostProcessorNames.size()); // 处理前面添加的orderedPostProcessorNames集合并将里面的bpp实例化进行注册
 		for (String ppName : orderedPostProcessorNames) {
 			BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 			orderedPostProcessors.add(pp);
@@ -272,7 +272,7 @@ final class PostProcessorRegistrationDelegate {
 		registerBeanPostProcessors(beanFactory, orderedPostProcessors);
 
 		// Now, register all regular BeanPostProcessors.
-		List<BeanPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size());
+		List<BeanPostProcessor> nonOrderedPostProcessors = new ArrayList<>(nonOrderedPostProcessorNames.size()); // 处理前面添加的nonOrderedPostProcessorNames集合并将里面的bpp实例化进行注册
 		for (String ppName : nonOrderedPostProcessorNames) {
 			BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 			nonOrderedPostProcessors.add(pp);
@@ -280,15 +280,15 @@ final class PostProcessorRegistrationDelegate {
 				internalPostProcessors.add(pp);
 			}
 		}
-		registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);
+		registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);// nonOrderedPostProcessors集合不用排序，么有实现顺序接口
 
 		// Finally, re-register all internal BeanPostProcessors.
-		sortPostProcessors(internalPostProcessors, beanFactory);
-		registerBeanPostProcessors(beanFactory, internalPostProcessors);
+		sortPostProcessors(internalPostProcessors, beanFactory); // 对前面凡是实现了MergedBeanDefinitionPostProcessor接口的bpp进行排序
+		registerBeanPostProcessors(beanFactory, internalPostProcessors);// 并将internalPostProcessors集合的MergedBeanDefinitionPostProcessor类型的bpp（虽然有些实现了ordered等接口）放到AbstractBeanFactory的beanPostProcessors集合后面（位于非Ordered接口的bpp后面），注意这里不会重复注册哈，虽然AbstractBeanFactory的beanPostProcessors集合是CopyOnWriteArrayList，但是AbstractBeanFactory.addBeanPostProcessors会移除原来的再放到后面
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,
-		// moving it to the end of the processor chain (for picking up proxies etc).
-		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext));
+		// moving it to the end of the processor chain (for picking up proxies etc). // TODO QUESTION:为何MergedBeanDefinitionPostProcessor类型的bpp和ApplicationListenerDetector这个bpp总是要放到最后面？
+		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext)); // AbstractBeanFactory的beanPostProcessors集合前面已经添加了一个ApplicationListenerDetector实例，现在重新新建一个ApplicationListenerDetector实例覆盖原来的并放到集合最后面，注意：因为ApplicationListenerDetector重写了equals方法，只要是同一个ApplicationListenerDetector和同一个容器内的都认为是equals，所以不会重复添加
 	}
 
 	private static void sortPostProcessors(List<?> postProcessors, ConfigurableListableBeanFactory beanFactory) {
@@ -374,7 +374,7 @@ final class PostProcessorRegistrationDelegate {
 		public Object postProcessBeforeInitialization(Object bean, String beanName) {
 			return bean;
 		}
-
+		// this.beanPostProcessorTargetCoun：最终要创建的bpp实例数量，如果在创建bpp期间，有一个bean创建了且该bean不是bpp和spring内部的基础bean的话，此时就会检查目前的bpp实例数量是不是小于要创建的目标bpp数量beanPostProcessorTargetCount，若小于，说明有一个bean比一些bpp还要提前创建，此时这个bean的生命周期就不会被这些bpp处理了（bpp的创建总会比普通bean线创建哈）
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) {
 			if (!(bean instanceof BeanPostProcessor) && !isInfrastructureBean(beanName) &&
