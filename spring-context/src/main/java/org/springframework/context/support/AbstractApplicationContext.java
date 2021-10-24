@@ -894,7 +894,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
-		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
+		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) && // 设置类型转换器，此时beanFactory并未注册ConversionService类型的bean，因此不会进入if逻辑
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
 					beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
@@ -903,7 +903,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no BeanFactoryPostProcessor
 		// (such as a PropertySourcesPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
-		if (!beanFactory.hasEmbeddedValueResolver()) {
+		if (!beanFactory.hasEmbeddedValueResolver()) {// 若AbstractBeanFactory的embeddedValueResolvers集合为空，那么添加一个StringValueResolver实例
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
@@ -917,10 +917,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
-		beanFactory.freezeConfiguration();
-
+		beanFactory.freezeConfiguration(); // 冻结配置信息即bd信息，即将DefaultListableBeanFactory的configurationFrozen设置为true且给frozenBeanDefinitionNames赋值bd信息
+											// 此时被冻结的bd信息将不会被修改或被后置处理了
 		// Instantiate all remaining (non-lazy-init) singletons.
-		beanFactory.preInstantiateSingletons();
+		beanFactory.preInstantiateSingletons(); // 实例化所有的非懒加载的bean
 	}
 
 	/**

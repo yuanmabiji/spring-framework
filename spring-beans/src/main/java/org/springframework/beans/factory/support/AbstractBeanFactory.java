@@ -1337,10 +1337,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	protected RootBeanDefinition getMergedLocalBeanDefinition(String beanName) throws BeansException {
 		// Quick check on the concurrent map first, with minimal locking.
-		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName);
-		if (mbd != null && !mbd.stale) {
+		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName); // 先从缓存中取，因为合并后的bd会放入mergedBeanDefinitions集合
+		if (mbd != null && !mbd.stale) { // stale参数表示bd是否重新合并
 			return mbd;
-		}
+		}// 若mergedBeanDefinitions集合不存在合并后的bd，那么进行父子bd合并
 		return getMergedBeanDefinition(beanName, getBeanDefinition(beanName));
 	}
 
@@ -1375,15 +1375,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		synchronized (this.mergedBeanDefinitions) {
 			RootBeanDefinition mbd = null;
 			RootBeanDefinition previous = null;
-
+			// containingBd一般是spring的内部bean，如果是业务自定义的，一般为null
 			// Check with full lock now in order to enforce the same merged instance.
 			if (containingBd == null) {
-				mbd = this.mergedBeanDefinitions.get(beanName);
+				mbd = this.mergedBeanDefinitions.get(beanName); // 再次从从缓存获取，防止其他线程已经merge了
 			}
 
 			if (mbd == null || mbd.stale) {
 				previous = mbd;
-				if (bd.getParentName() == null) {
+				if (bd.getParentName() == null) { // 如果么有parent bd，那么就不用merge，此时最终要返回RootBeanDefinition（不是RBD类型要转为RBD类型）
 					// Use copy of given root bean definition.
 					if (bd instanceof RootBeanDefinition) {
 						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
@@ -1392,15 +1392,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						mbd = new RootBeanDefinition(bd);
 					}
 				}
-				else {
+				else { // 如果存在parent bd的情况，则需要Merge
 					// Child bean definition: needs to be merged with parent.
 					BeanDefinition pbd;
 					try {
 						String parentBeanName = transformedBeanName(bd.getParentName());
-						if (!beanName.equals(parentBeanName)) {
-							pbd = getMergedBeanDefinition(parentBeanName);
+						if (!beanName.equals(parentBeanName)) { // 如果当前beanName与parentBeanName不相等，则说明这两个bean是在同一个容器，此时合并bd。因为同一个DefaultLiatableBeanFactory容器的beanDefinitionMap集合不会存在同名的bd的
+							pbd = getMergedBeanDefinition(parentBeanName); // 这是一个递归合并的过程，父亲可能合并爷爷的，以此类推，最终得到父辈以上合并后的bd信息
 						}
-						else {
+						else { // 如果当前beanName与parentBeanName相等,则获取父容器，再利用父容器类合并pbd
 							BeanFactory parent = getParentBeanFactory();
 							if (parent instanceof ConfigurableBeanFactory) {
 								pbd = ((ConfigurableBeanFactory) parent).getMergedBeanDefinition(parentBeanName);
@@ -1417,12 +1417,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 								"Could not resolve parent bean definition '" + bd.getParentName() + "'", ex);
 					}
 					// Deep copy with overridden values.
-					mbd = new RootBeanDefinition(pbd);
-					mbd.overrideFrom(bd);
+					mbd = new RootBeanDefinition(pbd); // 同样，不管pbd是哪种BeanDefinition,同样转为RootBeanDefinition类型哈
+					mbd.overrideFrom(bd); // 【重要】此时合并当前bd（子bd）和mbd（父bd信息）,子bd将会继承父bd的信息（同名属性子bd会覆盖父bd的哈）
 				}
 
 				// Set default singleton scope, if not configured before.
-				if (!StringUtils.hasLength(mbd.getScope())) {
+				if (!StringUtils.hasLength(mbd.getScope())) {// 默认设置为单例
 					mbd.setScope(SCOPE_SINGLETON);
 				}
 
@@ -1437,13 +1437,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// Cache the merged bean definition for the time being
 				// (it might still get re-merged later on in order to pick up metadata changes)
 				if (containingBd == null && isCacheBeanMetadata()) {
-					this.mergedBeanDefinitions.put(beanName, mbd);
+					this.mergedBeanDefinitions.put(beanName, mbd); // 将合并后的bd信息放入mergedBeanDefinitions集合缓存，注意，在PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors方法的beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);这句代码会对所有的beanDefinitionNames集合进行遍历并合并bd，很多合并后的bd信息就是在这时放入，而不是创建bean的时候（当然创建bean的时候也会进行检查当前bd有无合并，比如容器刷新后后面注册的bd）
 				}
 			}
 			if (previous != null) {
 				copyRelevantMergedBeanDefinitionCaches(previous, mbd);
 			}
-			return mbd;
+			return mbd; // 最终返回合并后的bd
 		}
 	}
 
