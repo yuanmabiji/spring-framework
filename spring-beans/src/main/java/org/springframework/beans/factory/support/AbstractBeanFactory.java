@@ -310,16 +310,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				checkMergedBeanDefinition(mbd, beanName, args); // 检查mbd是否为abstract，是的话抛出异常
 
 				// Guarantee initialization of beans that the current bean depends on.
-				String[] dependsOn = mbd.getDependsOn();
+				String[] dependsOn = mbd.getDependsOn(); // 获取到当前bean需要depend on的bean,此时先将depend on bean实例化
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
-						if (isDependent(beanName, dep)) {
+						if (isDependent(beanName, dep)) { // 如果当前bean与depend on bean互相depend on即出现循环依赖，此时抛出异常
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
-						registerDependentBean(dep, beanName);
+						registerDependentBean(dep, beanName);// 将dependon 的bean添加至dependentBeanMap集合，将beanName添加至dependenciesForBeanMap集合
 						try {
-							getBean(dep);
+							getBean(dep); // 实例化depend on的bean，注意若出现循环depend on,那么将会抛出BeanCreationException
 						}
 						catch (NoSuchBeanDefinitionException ex) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
@@ -327,12 +327,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 					}
 				}
-
+				// 此时开始创建bean实例
 				// Create bean instance.
-				if (mbd.isSingleton()) {
-					sharedInstance = getSingleton(beanName, () -> {
+				if (mbd.isSingleton()) { // 【1】若是单例情况
+					sharedInstance = getSingleton(beanName, () -> { // 这个lambda表示式即ObjectFactory匿名对象实例
 						try {
-							return createBean(beanName, mbd, args);
+							return createBean(beanName, mbd, args); // 开始创建bean：实例化，属性注入和初始化
 						}
 						catch (BeansException ex) {
 							// Explicitly remove instance from singleton cache: It might have been put there
@@ -345,7 +345,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
-				else if (mbd.isPrototype()) {
+				else if (mbd.isPrototype()) { // 【2】若是多例情况
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
@@ -358,7 +358,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					beanInstance = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
-				else {
+				else { // web相关，比如REQUEST,SESSION等scope
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {
 						throw new IllegalStateException("No scope name defined for bean '" + beanName + "'");
@@ -982,7 +982,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	BeanPostProcessorCache getBeanPostProcessorCache() {
 		BeanPostProcessorCache bpCache = this.beanPostProcessorCache;
 		if (bpCache == null) {
-			bpCache = new BeanPostProcessorCache();
+			bpCache = new BeanPostProcessorCache(); // 遍历beanPostProcessors集合，并对下面几种类型的bpp分别添加到BeanPostProcessorCache的相应集合
 			for (BeanPostProcessor bp : this.beanPostProcessors) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					bpCache.instantiationAware.add((InstantiationAwareBeanPostProcessor) bp);
@@ -1523,7 +1523,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
-			if (mbd.hasBeanClass()) {
+			if (mbd.hasBeanClass()) { //如果mbd属性beanClass存储的是Class类型，那么直接返回了；如果存储的是字符串，那么还需要调用doResolveBeanClass解析成class类型返回（@Component和@Configuration注解的一般是这种情况）
 				return mbd.getBeanClass();
 			}
 			if (System.getSecurityManager() != null) {

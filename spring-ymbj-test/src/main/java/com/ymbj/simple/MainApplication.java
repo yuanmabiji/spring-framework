@@ -1,5 +1,6 @@
 package com.ymbj.simple;
 
+import com.ymbj.simple.bean.CglibBean;
 import com.ymbj.simple.bean.GenericBean;
 import com.ymbj.simple.bean.RootBean;
 import com.ymbj.simple.beandefinition.Person;
@@ -23,6 +24,8 @@ public class MainApplication {
 		Object childBean = ac.getBean("childBean"); // 通过bd注册的话，子bean会覆盖父bean的同名属性
 		Object parent = ac.getBean("parent");
 		Object child = ac.getBean("child"); // 通过@Component注册的父子bean，子bean不会覆盖父bean的同名属性
+		CglibBean cglibBeanProxy = (CglibBean)ac.getBean("cglibBean");
+		String result = cglibBeanProxy.sayHello();
  		System.out.println();
 		ac.stop(); // 这句日志并不能吊起DisposableBean的destroy方法和@PreDestroy注解的方法
 	}

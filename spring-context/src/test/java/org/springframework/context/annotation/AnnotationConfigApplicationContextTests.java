@@ -334,10 +334,11 @@ class AnnotationConfigApplicationContextTests {
 		assertThat(context.getBean("b", BeanB.class).applicationContext).isSameAs(context);
 	}
 
+
 	@Test
 	void individualBeanWithFactoryBeanSupplier() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.registerBean("fb", NonInstantiatedFactoryBean.class, NonInstantiatedFactoryBean::new, bd -> bd.setLazyInit(true));
+		context.registerBean("fb", NonInstantiatedFactoryBean.class, NonInstantiatedFactoryBean::new, bd -> bd.setLazyInit(false));
 		context.refresh();
 
 		assertThat(context.getType("fb")).isEqualTo(String.class);
