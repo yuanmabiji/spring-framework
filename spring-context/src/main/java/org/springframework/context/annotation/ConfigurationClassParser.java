@@ -223,6 +223,17 @@ class ConfigurationClassParser {
 
 
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
+		// 【注意】对于一些phase是REGISTER_BEAN的条件注解（比如springboot的@ConditionalOnMissingBean）注解的配置类在解析阶段不会跳过，
+		// 比如MybatisAutoConfiguration.MapperScannerRegistrarNotFoundConfiguration配置类，当存在@MapperScan("com.xxx.mapper")，
+		// 其上的 @ConditionalOnMissingBean({MapperFactoryBean.class})为false即不满足条件，此时不会创建MapperScannerRegistrarNotFoundConfiguration实例（此时直接调用反射方法创建，还不到spring容器实例化所有bean的阶段哈）
+		// 但会创建其@Import的MybatisAutoConfiguration.AutoConfiguredMapperScannerRegistrar实例（因为这里传入的条件是PARSE_CONFIGURATION，
+		// 而@ConditionalOnMissingBean的phase是REGISTER_BEAN，所以shouldSkip方法返回false），然后执行到ConfigurationClassParser.processImports方法的
+		// BeanUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class);这句代码实例化了AutoConfiguredMapperScannerRegistrar这个哥们。
+		// 虽然创建了AutoConfiguredMapperScannerRegistrar实例，但不会执行其registerBeanDefinitions方法，因为最后在调用registerBeanDefinitions方法前会再次判断
+		// MapperScannerRegistrarNotFoundConfiguration配置类的条件注解满不满足条件，只有在满足条件的情况下才会调用该方法注册bd哈。
+		// 参考ConfigurationClassBeanDefinitionReader.loadBeanDefinitionsForConfigurationClass方法
+		// 【扩展】@MapperScan这个注解可以重复标注在不同类上，若多次标注 @MapperScan注解，然后会根据不同@MapperScan注解创建不同的MapperScannerRegistrar实例（不是同一个哈），
+		// 不同的MapperScannerRegistrar实例再注册mapper相关的bd哈。这一阶段都在调用beanFactoryPostProcessor方法时完成。
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
