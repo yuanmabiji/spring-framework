@@ -650,6 +650,9 @@ class CglibAopProxy implements AopProxy, Serializable {
 	/**
 	 * General purpose AOP callback. Used when the target is dynamic or when the
 	 * proxy is not frozen.
+	 * TODO 待确认：一般会为所有AOP cglib代理都加上这个外层的DynamicAdvisedInterceptor拦截器，
+	 * TODO 然后这个拦截器是用来查找被调用方法的所属拦截器链通知的，然后加入到方法执行前后执行了，
+	 * TODO 初步看，cglib不同于Jdk代理，在spring的后置处理器中创建代理时加入的应该都是这个拦截器，而非真正的advisors拦截器们。
 	 */
 	private static class DynamicAdvisedInterceptor implements MethodInterceptor, Serializable {
 
